@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>diag</title><link rel="stylesheet" href="../css/style.css"></head>
+<body data-page="test">
+<header id="top"><div class="nav-left"><a class="logo" data-nav="test"><span class="logo-text">m</span></a></div><nav class="nav-center"><button class="nav-item" data-nav="test">test</button></nav><div class="nav-right"><button class="icon-button" id="themeButton"></button><button class="icon-button" id="soundButton"></button><button class="icon-button" id="commandButton"></button></div></header>
+<main id="main">
+<section class="page" data-page="test"><div id="typingTest"><div id="configBar"><div class="config-group" id="cg-punctuation"><button class="config-button" data-config="punctuation">@ punctuation</button></div><div class="config-group" id="cg-numbers"><button class="config-button" data-config="numbers"># numbers</button></div><div class="config-spacer"></div><div class="config-group" id="cg-mode"><button class="config-button" data-mode="time">time</button><button class="config-button" data-mode="words">words</button><button class="config-button" data-mode="quote">quote</button><button class="config-button" data-mode="zen">zen</button></div><div class="config-group" id="cg-values"></div><div class="config-spacer"></div><div class="config-group" id="cg-funbox"></div><div class="config-group" id="cg-language"></div></div><div id="testArea"><div id="liveStats"><div class="live-stat" id="liveWpm"><span class="live-stat-value">0</span></div><div class="live-stat" id="liveAcc"><span class="live-stat-value">100%</span></div><div class="live-stat" id="liveBurst"><span class="live-stat-value">0</span></div><div class="live-stat" id="liveTimer"><span class="live-stat-value">30</span></div></div><div id="wordsWrapper"><div id="words"></div><div id="caret" class="caret"></div><div id="paceCaret" class="caret pace-caret"></div></div><div id="timerBar"><div id="timerBarFill"></div></div><div id="outOfFocus" hidden><button id="focusButton">focus</button></div><div id="result" hidden></div></div><div id="keymap" hidden></div><div id="restartHint" hidden></div></div></section>
+<section class="page" data-page="settings"><div class="page-content"><div id="settingsContent"></div></div></section>
+<section class="page" data-page="profile"><div class="page-content"><div id="profileContent"></div></div></section>
+</main>
+<footer id="bottom"><span>&copy; <span id="year"></span> v<span id="version"></span></span><button id="footerResetButton">reset</button></footer>
+<div id="commandPalette" hidden><div class="palette-box"><input id="paletteInput"><div id="paletteList"></div></div></div>
+<div id="themeDropdown" hidden></div>
+<div id="notification" hidden></div>
+<input id="mobileInput" type="text">
+<script src="../js/data/words.js"></script>
+<script src="../js/data/quotes.js"></script>
+<script src="../js/data/themes.js"></script>
+<script src="../js/keymap.js"></script>
+<script src="../js/config.js"></script>
+<script src="../js/sound.js"></script>
+<script src="../js/chart.js"></script>
+<script src="../js/typing.js"></script>
+<script src="../js/commands.js"></script>
+<script src="../js/ui.js"></script>
+<script src="../js/app.js"></script>
+<script>
+  setTimeout(function(){
+    var T=MT.Typing;
+    T.nextTest();
+    var w=T.words[0];
+    var calls=0;
+    var orig=T.typeChar;
+    T.typeChar=function(ch){ calls++; orig.call(T,ch); };
+    document.dispatchEvent(new KeyboardEvent("keydown",{key:w[0],bubbles:true,cancelable:true}));
+    setTimeout(function(){
+      var d=document.createElement("div"); d.id="diag";
+      d.textContent="DIAG calls="+calls+" input0="+ (T.input[0]?T.input[0].join(""):"")+" w0="+w+" char="+w[0];
+      document.body.appendChild(d);
+    },200);
+  }, 1000);
+</script>
+</body></html>

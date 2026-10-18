@@ -335,6 +335,8 @@
     /* -------------------------------------------------------------- */
 
     load: function (keepWords) {
+      try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (e) {}
+      try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (e) {}
       const c = cfg();
       this.stopTimers();
       this.zen = c.mode === "zen";
