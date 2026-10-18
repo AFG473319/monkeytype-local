@@ -694,7 +694,11 @@ input[type="range"]::-moz-range-thumb {
   box-shadow: var(--shadow);
   padding: 0.5rem;
   max-height: 24rem;
+  /* Only ever scroll vertically. Setting overflow-y on its own makes overflow-x
+     compute to auto as well, which is what put a horizontal bar under the theme
+     list whenever a long theme name was one pixel too wide. */
   overflow-y: auto;
+  overflow-x: hidden;
   width: 20rem;
 }
 
@@ -708,9 +712,13 @@ input[type="range"]::-moz-range-thumb {
   font-size: 0.85rem;
 }
 
-.dropdown-list { display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem; }
+/* minmax(0, 1fr) rather than 1fr: a bare 1fr track has an automatic minimum of
+   min-content, so a long theme name would widen the column past the dropdown
+   instead of eliding. */
+.dropdown-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.35rem; }
 .dropdown-item {
   display: flex;
+  min-width: 0;
   align-items: center;
   gap: 0.5rem;
   padding: 0.4rem 0.5rem;
@@ -724,7 +732,7 @@ input[type="range"]::-moz-range-thumb {
 .dropdown-item.active { color: var(--main-color); }
 .swatch-dots { display: flex; gap: 2px; flex: none; }
 .swatch-dots i { width: 0.45rem; height: 0.45rem; border-radius: 50%; display: block; }
-.dropdown-item .label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dropdown-item .label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ============================== COMMAND LINE ============================== */
 
@@ -760,7 +768,8 @@ input[type="range"]::-moz-range-thumb {
   font-size: 1rem;
 }
 
-#paletteList { overflow-y: auto; padding: 0.4rem; }
+/* same reasoning as #themeDropdown: one axis only, so no stray horizontal bar */
+#paletteList { overflow-y: auto; overflow-x: hidden; padding: 0.4rem; }
 
 .palette-item {
   display: flex;
@@ -905,7 +914,7 @@ body.focus-mode.typing #configBar:hover {
   #main { padding: 0 0.8rem; }
   .nav-center { order: 3; width: 100%; justify-content: center; }
   #configBar { font-size: 0.75rem; margin-bottom: 1.5rem; }
-  .dropdown-list { grid-template-columns: 1fr; }
+  .dropdown-list { grid-template-columns: minmax(0, 1fr); }
   #themeDropdown { width: calc(100vw - 2rem); }
   .setting { grid-template-columns: 1fr; }
   .setting-control { grid-row: auto; grid-column: 1; justify-content: flex-start; }

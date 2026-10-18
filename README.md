@@ -157,9 +157,9 @@ and the whole point of this project is that double-clicking the HTML file works.
 There is no npm, no test runner and no build step, so the suite is a page:
 open **`tests/smoke.html`** and look at the report it prints at the bottom. The first
 line is a machine-readable summary and the `<title>` mirrors it
-(`SMOKE failed=0 total=109`), so a script can check it without parsing the list.
+(`SMOKE failed=0 total=114`), so a script can check it without parsing the list.
 
-It covers 109 checks across the real seams — the word generator, the typing engine, the
+It covers 114 checks across the real seams — the word generator, the typing engine, the
 chart renderer and the UI — including:
 
 - a deterministic, seeded property test proving that a generated sentence always opens
@@ -172,6 +172,8 @@ chart renderer and the UI — including:
 - theme switching, punctuation/numbers injection and the config bar
 - the word lists themselves: no duplicated words, no label that claims a size the list
   does not have, and `english 200` really is the top 200 of the english list
+- the theme dropdown opening from a click, listing every theme in two columns, and
+  refusing to scroll sideways even when squeezed
 - the live speed readout staying sane from the very first keystroke instead of dividing
   by a millisecond-wide time window
 

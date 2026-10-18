@@ -224,6 +224,28 @@ window.addEventListener("unhandledrejection", function (e) {
     check("theme vars applied", document.documentElement.style.getPropertyValue("--main-color").length > 0, document.documentElement.style.getPropertyValue("--main-color"));
     check("custom theme exists", !!MT.Config.data.customTheme.bg);
 
+    /* ---- the theme dropdown never scrolls sideways ---- */
+    document.getElementById("themeButton").click();
+    const dd = document.getElementById("themeDropdown");
+    check("the theme button opens the theme dropdown", dd.hidden === false);
+    const ddItems = dd.querySelectorAll(".dropdown-item");
+    check("theme dropdown is populated", ddItems.length > 40, ddItems.length);
+
+    const firstRowTop = Math.min.apply(null, Array.prototype.map.call(ddItems, function (el) { return el.offsetTop; }));
+    const inFirstRow = Array.prototype.filter.call(ddItems, function (el) { return el.offsetTop === firstRowTop; }).length;
+    check("themes are laid out in two columns", inFirstRow === 2, inFirstRow + " in the first row");
+
+    /* Squeeze it hard. A bare 1fr track has a min-content floor, so a long name
+       like "frozen_llama" used to widen the grid past the box and force a
+       horizontal scrollbar. This is the condition that produced one. */
+    const ddWidth = dd.style.width;
+    dd.style.width = "12rem";
+    const sideways = dd.scrollWidth - dd.clientWidth;
+    check("theme dropdown has no horizontal overflow, even when squeezed", sideways <= 1, sideways + "px");
+    dd.style.width = ddWidth;
+    MT.UI.closeDropdown();
+    check("the theme dropdown closes again", dd.hidden === true);
+
     MT.Config.set("language", "python");
     MT.Typing.load(false);
     check("python words generated", T.words.length > 0 && T.words.every(function (w) {
