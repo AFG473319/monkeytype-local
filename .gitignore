@@ -10,3 +10,6 @@ Desktop.ini
 # The real suite is tests/smoke.html and is committed.
 _*.html
 _*.png
+
+# Agent instructions (local only)
+AGENTS.md
