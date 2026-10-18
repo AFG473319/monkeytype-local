@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<title>monkeytype</title>
+<meta name="description" content="A fully local typing test: wpm, accuracy, quotes, zen mode, themes, charts and history. No network required.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='6' cy='13' r='4.5' fill='%23e2b714'/%3E%3Ccircle cx='26' cy='13' r='4.5' fill='%23e2b714'/%3E%3Ccircle cx='16' cy='17' r='11' fill='%23e2b714'/%3E%3Ccircle cx='12' cy='15' r='2.1' fill='%23323437'/%3E%3Ccircle cx='20' cy='15' r='2.1' fill='%23323437'/%3E%3Cpath d='M11 21q5 3 10 0' stroke='%23323437' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="test">
+
+<!-- ============================== HEADER ============================== -->
+<header id="top">
+  <div class="nav-left">
+    <a class="logo" data-nav="test" href="#test" aria-label="monkeytype home">
+      <svg class="logo-icon" viewBox="0 0 32 32" aria-hidden="true">
+        <circle cx="6" cy="13" r="4.5" fill="currentColor"/>
+        <circle cx="26" cy="13" r="4.5" fill="currentColor"/>
+        <circle cx="16" cy="17" r="11" fill="currentColor"/>
+      </svg>
+      <span class="logo-text">monkeytype</span>
+    </a>
+  </div>
+
+  <nav class="nav-center" aria-label="main">
+    <button class="nav-item" data-nav="test">test</button>
+    <button class="nav-item" data-nav="about">about</button>
+    <button class="nav-item" data-nav="profile">profile</button>
+    <button class="nav-item" data-nav="settings">settings</button>
+  </nav>
+
+  <div class="nav-right">
+    <button class="icon-button" id="themeButton" title="Theme">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 2 2 0 0 0 1.6-3.2 2 2 0 0 1 1.6-3.2H17a4 4 0 0 0 4-4 9.9 9.9 0 0 0-9-9.6Z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="8" cy="9" r="1.4" fill="currentColor"/><circle cx="12" cy="7" r="1.4" fill="currentColor"/><circle cx="7" cy="14" r="1.4" fill="currentColor"/></svg>
+    </button>
+    <button class="icon-button" id="soundButton" title="Sound">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h3l4 4V5L7 9H4Z" fill="currentColor"/><path class="sound-wave" d="M15 8.5a5 5 0 0 1 0 7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+    </button>
+    <button class="icon-button" id="commandButton" title="Command line (Esc)">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 8 3 4-3 4M13 16h4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- ============================== TEST ============================== -->
+  <section class="page" data-page="test">
+    <div id="typingTest">
+
+      <div id="configBar">
+        <div class="config-group" id="cg-punctuation">
+          <button class="config-button" data-config="punctuation">@ punctuation</button>
+        </div>
+        <div class="config-group" id="cg-numbers">
+          <button class="config-button" data-config="numbers"># numbers</button>
+        </div>
+        <div class="config-spacer"></div>
+        <div class="config-group" id="cg-mode">
+          <button class="config-button" data-mode="time">time</button>
+          <button class="config-button" data-mode="words">words</button>
+          <button class="config-button" data-mode="quote">quote</button>
+          <button class="config-button" data-mode="zen">zen</button>
+        </div>
+        <div class="config-group" id="cg-values"></div>
+        <div class="config-spacer"></div>
+        <div class="config-group" id="cg-funbox"></div>
+        <div class="config-group" id="cg-language"></div>
+      </div>
+
+      <div id="testArea">
+        <div id="liveStats">
+          <div class="live-stat" id="liveWpm"><span class="live-stat-value">0</span><span class="live-stat-label">wpm</span></div>
+          <div class="live-stat" id="liveAcc"><span class="live-stat-value">100%</span><span class="live-stat-label">acc</span></div>
+          <div class="live-stat" id="liveBurst"><span class="live-stat-value">0</span><span class="live-stat-label">burst</span></div>
+          <div class="live-stat" id="liveTimer"><span class="live-stat-value">30</span><span class="live-stat-label">s</span></div>
+        </div>
+
+        <div id="wordsWrapper">
+          <div id="words" aria-live="off"></div>
+          <div id="caret" class="caret"></div>
+          <div id="paceCaret" class="caret pace-caret"></div>
+        </div>
+
+        <div id="timerBar"><div id="timerBarFill"></div></div>
+
+        <div id="outOfFocus" hidden>
+          <button id="focusButton">Click here or press any key to focus</button>
+        </div>
+
+        <div id="result" hidden></div>
+      </div>
+
+      <div id="keymap" hidden></div>
+
+      <div id="restartHint" hidden><span class="key">tab</span> + <span class="key">enter</span> &mdash; restart test</div>
+    </div>
+  </section>
+
+  <!-- ============================== ABOUT ============================== -->
+  <section class="page" data-page="about">
+    <div class="page-content about">
+      <h1>about</h1>
+      <p>
+        This is <strong>monkeytype local</strong> &mdash; a self-contained typing test that runs entirely on your
+        machine. There is no server, no account, no analytics, no network request, and no build step. Open
+        <code>index.html</code> and it works, offline, forever.
+      </p>
+
+      <h2>what it measures</h2>
+      <ul>
+        <li><strong>wpm</strong> &mdash; net words per minute: correctly typed characters (plus the spaces after fully correct words) divided by 5, divided by minutes elapsed. A word is only credited when every letter in it is right.</li>
+        <li><strong>raw</strong> &mdash; every character you pressed, right or wrong, over the same period. The gap between raw and wpm is your error cost.</li>
+        <li><strong>accuracy</strong> &mdash; correct keystrokes divided by all keystrokes. Fixing a mistake does not undo the wrong press, exactly like the real thing.</li>
+        <li><strong>consistency</strong> &mdash; 1 minus the coefficient of variation of your per-second raw speed. High consistency means you held a steady pace instead of sprinting and stalling.</li>
+        <li><strong>burst</strong> &mdash; your fastest one-second window.</li>
+        <li><strong>characters</strong> &mdash; correct, incorrect, extra (typed past the end of a word) and missed (skipped by pressing space early).</li>
+      </ul>
+
+      <h2>modes</h2>
+      <ul>
+        <li><strong>time</strong> &mdash; 15, 30, 60 or 120 seconds; the clock decides when you stop.</li>
+        <li><strong>words</strong> &mdash; 10, 25, 50, 100 or on-and-on; you stop when the last word is finished.</li>
+        <li><strong>quote</strong> &mdash; short, medium or long passages, punctuation and capitals included.</li>
+        <li><strong>zen</strong> &mdash; no word list at all. Type whatever you like and press <span class="key">enter</span> when you are done.</li>
+      </ul>
+
+      <h2>keyboard</h2>
+      <table class="keys">
+        <tr><td><span class="key">tab</span></td><td>restart the test, keeping your settings</td></tr>
+        <tr><td><span class="key">tab</span> then <span class="key">enter</span></td><td>restart the test (the classic monkeytype gesture)</td></tr>
+        <tr><td><span class="key">esc</span></td><td>open the command line</td></tr>
+        <tr><td><span class="key">ctrl</span> + <span class="key">backspace</span></td><td>delete the whole current word</td></tr>
+        <tr><td><span class="key">enter</span></td><td>next test, once a result is showing</td></tr>
+      </table>
+
+      <h2>privacy</h2>
+      <p>
+        Your results, personal bests and settings live in this browser's <code>localStorage</code>. Nothing is
+        uploaded anywhere. Clearing site data for this page clears your history, which is the only way to
+        "delete your account".
+      </p>
+
+      <h2>credits</h2>
+      <p>
+        Written from scratch as a homage to <a href="https://monkeytype.com" rel="noopener">monkeytype</a> by
+        Miodec and contributors, whose design and metric definitions inspired every part of this. This project
+        shares no code or assets with it. Word lists are drawn from common-English frequency data and code
+        languages from language keywords; quotes are from public-domain authors; themes are recreations of
+        well-known colour schemes.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============================== SETTINGS ============================== -->
+  <section class="page" data-page="settings">
+    <div class="page-content">
+      <div id="settingsContent"></div>
+    </div>
+  </section>
+
+  <!-- ============================== PROFILE ============================== -->
+  <section class="page" data-page="profile">
+    <div class="page-content">
+      <div id="profileContent"></div>
+    </div>
+  </section>
+
+</main>
+
+<footer id="bottom">
+  <span class="footer-left">&copy; <span id="year"></span> &middot; entirely local &middot; v<span id="version"></span></span>
+  <span class="footer-links">
+    <button data-nav="about">about</button>
+    <button data-nav="profile">profile</button>
+    <button id="footerResetButton">reset data</button>
+  </span>
+</footer>
+
+<!-- ============================== COMMAND LINE ============================== -->
+<div id="commandPalette" hidden>
+  <div class="palette-box">
+    <input id="paletteInput" type="text" placeholder="type a command&hellip;" autocomplete="off" spellcheck="false">
+    <div id="paletteList"></div>
+  </div>
+</div>
+
+<div id="themeDropdown" hidden></div>
+<div id="notification" hidden></div>
+<input id="mobileInput" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="typing input" tabindex="-1">
+
+<noscript>
+  <p style="text-align:center;padding:3rem">This typing test needs JavaScript, which your browser has disabled.</p>
+</noscript>
+
+<script src="js/data/words.js"></script>
+<script src="js/data/quotes.js"></script>
+<script src="js/data/themes.js"></script>
+<script src="js/keymap.js"></script>
+<script src="js/config.js"></script>
+<script src="js/sound.js"></script>
+<script src="js/chart.js"></script>
+<script src="js/typing.js"></script>
+<script src="js/commands.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
