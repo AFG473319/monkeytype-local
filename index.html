@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark light">
 <title>monkeytype</title>
 <meta name="description" content="A fully local typing test: wpm, accuracy, quotes, zen mode, themes, charts and history. No network required.">
@@ -189,7 +189,7 @@
 
 <div id="themeDropdown" hidden></div>
 <div id="notification" hidden></div>
-<input id="mobileInput" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="typing input" tabindex="-1">
+<input id="mobileInput" type="text" inputmode="text" enterkeyhint="enter" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" aria-label="typing input" tabindex="-1">
 
 <noscript>
   <p style="text-align:center;padding:3rem">This typing test needs JavaScript, which your browser has disabled.</p>
@@ -206,5 +206,6 @@
 <script src="js/commands.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/app.js"></script>
+
 </body>
 </html>

@@ -59,6 +59,7 @@
     window.addEventListener("resize", function () {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(function () {
+        MT.Config.apply();
         if (!document.getElementById("result").hidden && MT.Typing.result) {
           MT.UI.showResult(MT.Typing.result);
         }
@@ -71,7 +72,26 @@
       MT.Typing.focusInput();
     });
 
-    document.title = "monkeytype";
+    /* keep CSS in sync with the real (possibly keyboard-shrunk) viewport */
+  function syncViewport() {
+    const vv = window.visualViewport;
+    const h = vv ? vv.height : window.innerHeight;
+    document.documentElement.style.setProperty("--app-height", h + "px");
+  }
+  syncViewport();
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", syncViewport);
+    window.visualViewport.addEventListener("scroll", syncViewport);
+  }
+  window.addEventListener("resize", syncViewport);
+
+  /* on touch devices the on-screen keyboard needs a gesture; prompt for it */
+  if (MT.Typing.isTouchDevice()) {
+    const oof = document.getElementById("outOfFocus");
+    if (oof) oof.hidden = false;
+  }
+
+  document.title = "monkeytype";
   }
 
   if (document.readyState === "loading") {

@@ -105,15 +105,32 @@
           const value = mi.value;
           mi.value = "";
           for (const ch of value) {
-            if (ch === "\n") continue;
+            if (ch === "\n" || ch === "\r") {
+              if (self._enterGuard) continue;
+              if (self.finished) self.nextTest();
+              else if (self.zen && self.input[0] && self.input[0].length) self.finish("zen");
+              else if (cfg().quickRestart === "enter") self.restart();
+              continue;
+            }
             self.typeChar(ch === " " ? " " : ch);
           }
         });
-        mi.addEventListener("keydown", function (e) { self.onKeyDown(e); });
+        mi.addEventListener("keydown", function (e) {
+          /* Only special keys are handled here. Normal characters arrive
+             through the input event, so we never type a letter twice. */
+          const special = e.key === "Backspace" || e.key === "Enter" ||
+            e.key === "Tab" || e.key === "Escape";
+          if (!special) {
+            e.stopPropagation();
+            return;
+          }
+          e.stopPropagation();
+          self.onKeyDown(e);
+        });
       }
 
       let resizeTimer = null;
-      window.addEventListener("resize", function () {
+      function scheduleLayout() {
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(function () {
           if (!self.finished && self.words.length) {
@@ -122,18 +139,68 @@
             self.updateCaret();
           }
         }, 120);
-      });
+      }
+      window.addEventListener("resize", scheduleLayout);
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener("resize", function () {
+          scheduleLayout();
+          self.ensureVisible();
+        });
+        window.visualViewport.addEventListener("scroll", function () {
+          self.ensureVisible();
+        });
+      }
 
       document.addEventListener("visibilitychange", function () {
         if (document.hidden && self.started && !self.finished) self.pauseTimer();
       });
     },
 
+    isTouchDevice: function () {
+      try {
+        return window.matchMedia("(pointer: coarse)").matches ||
+          (navigator.maxTouchPoints > 0 && window.innerWidth <= 1024);
+      } catch (e) {
+        return navigator.maxTouchPoints > 0;
+      }
+    },
+
+    blurInput: function () {
+      const mi = this.els.mobileInput;
+      if (mi) { try { mi.blur(); } catch (e) {} }
+    },
+
     focusInput: function () {
       const mi = this.els.mobileInput;
-      if (mi && window.matchMedia("(pointer: coarse)").matches) {
-        mi.value = "";
-        mi.focus();
+      if (!mi) return;
+      if (!this.isTouchDevice()) return;
+      mi.value = "";
+      try { mi.focus({ preventScroll: true }); } catch (e) { mi.focus(); }
+      const oof = document.getElementById("outOfFocus");
+      if (oof) oof.hidden = true;
+      const self = this;
+      /* keep the words visible above the on-screen keyboard */
+      setTimeout(function () {
+        const wrapper = self.els.wrapper;
+        if (wrapper && wrapper.scrollIntoView) {
+          try { wrapper.scrollIntoView({ block: "center", behavior: "smooth" }); } catch (e) { wrapper.scrollIntoView(); }
+        }
+      }, 250);
+    },
+
+    ensureVisible: function () {
+      if (!this.isTouchDevice()) return;
+      const wrapper = this.els.wrapper;
+      if (!wrapper) return;
+      const vv = window.visualViewport;
+      const bottom = vv ? (vv.height + vv.offsetTop) : window.innerHeight;
+      const rect = wrapper.getBoundingClientRect();
+      if (rect.bottom > bottom - 16 || rect.top < (vv ? vv.offsetTop : 0) + 8) {
+        try {
+          wrapper.scrollIntoView({ block: "center", behavior: "auto" });
+        } catch (e) {
+          wrapper.scrollIntoView();
+        }
       }
     },
 
@@ -334,6 +401,11 @@
       this.els.words.querySelectorAll(".word").forEach(function (el) { el.classList.remove("active"); });
       if (this.wordEls[0]) this.wordEls[0].classList.add("active");
       this.updateCaret();
+
+      if (this.isTouchDevice()) {
+        const self = this;
+        setTimeout(function () { self.focusInput(); }, 60);
+      }
     },
 
     buildWords: function () {
@@ -638,6 +710,9 @@
       if (this.finished) {
         if (key === "Enter" || (key === " " && !e.shiftKey)) {
           e.preventDefault();
+          this._enterGuard = true;
+          const self = this;
+          setTimeout(function () { self._enterGuard = false; }, 60);
           this.nextTest();
         } else if (key === "Tab") {
           e.preventDefault();
@@ -657,6 +732,9 @@
 
       if (key === "Enter") {
         e.preventDefault();
+        this._enterGuard = true;
+        const self = this;
+        setTimeout(function () { self._enterGuard = false; }, 60);
         if (this.pendingRestart) {
           this.restart();
           return;
@@ -915,6 +993,8 @@
     start: function () {
       this.started = true;
       this.startTime = Date.now();
+      const oof = document.getElementById("outOfFocus");
+      if (oof) oof.hidden = true;
       this.lastKeyTime = this.startTime;
       document.body.classList.add("typing");
 

@@ -433,7 +433,8 @@
       set("--colorful-error-color", theme.colorfulError || theme.error);
       set("--colorful-error-extra-color", theme.colorfulErrorExtra || theme.errorExtra);
 
-      const fontSize = Math.max(0.6, 1.5 * Number(c.fontSize || 1));
+      const baseSize = (window.innerWidth <= 640) ? 1.15 : 1.5;
+      const fontSize = Math.max(0.6, baseSize * Number(c.fontSize || 1));
       set("--font-size", fontSize.toFixed(3) + "rem");
       set("--line-height", (fontSize * 1.6).toFixed(3) + "rem");
 

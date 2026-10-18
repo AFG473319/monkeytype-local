@@ -240,6 +240,7 @@
     },
 
     openPalette: function () {
+      if (MT.Typing && MT.Typing.blurInput) MT.Typing.blurInput();
       this.build();
       this.open = true;
       this.palette.hidden = false;

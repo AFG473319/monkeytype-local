@@ -118,6 +118,7 @@
     /* routing                                                        */
     /* -------------------------------------------------------------- */
     showPage: function (name) {
+      if (MT.Typing && MT.Typing.blurInput) MT.Typing.blurInput();
       if (!document.querySelector('.page[data-page="' + name + '"]')) name = "test";
       this.page = name;
       document.body.setAttribute("data-page", name);
@@ -139,6 +140,7 @@
     /* generic dropdown                                               */
     /* -------------------------------------------------------------- */
     openDropdown: function (anchor, options) {
+      if (MT.Typing && MT.Typing.blurInput) MT.Typing.blurInput();
       const dropdown = document.getElementById("themeDropdown");
       const self = this;
 

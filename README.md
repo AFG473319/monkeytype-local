@@ -71,6 +71,14 @@ npx serve .        # or: python -m http.server
 - about, profile and settings pages
 - results, personal bests and a progress chart on the profile page
 
+**Mobile**
+- tap the words (or the "click here or press any key to focus" prompt) to raise the on-screen
+  keyboard; the test keeps typing through the hidden input, spaces and enter included
+- the layout tracks the real viewport, so the words stay visible both with the keyboard open
+  and closed, including on iOS Safari and Android Chrome
+- safe-area insets, larger tap targets and a horizontally scrollable settings table keep the
+  UI usable on small screens
+
 ---
 
 ## Keyboard
