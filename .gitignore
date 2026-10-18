@@ -1,0 +1,12 @@
+# OS and editor noise
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+.idea/
+.vscode/
+
+# Local verification scaffolding scraped together while developing.
+# The real suite is tests/smoke.html and is committed.
+_*.html
+_*.png
