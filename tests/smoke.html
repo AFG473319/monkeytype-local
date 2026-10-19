@@ -187,7 +187,18 @@ window.addEventListener("unhandledrejection", function (e) {
     check("keypresses counted", T.keypressTotal > 0, T.keypressTotal);
     check("all correct so far", T.keypressIncorrect === 0, T.keypressIncorrect);
     check("accuracy 100", Math.round(T.computeAccuracy()) === 100, T.computeAccuracy());
-    check("wpm is a sane number", T.computeWpm() > 0 && T.computeWpm() < 2000, T.computeWpm());
+    /* computeWpm divides by the real elapsed window. These keystrokes were all
+       dispatched in one synchronous burst, so "elapsed" was however long this
+       machine took to run the loop: milliseconds in a fast headless renderer
+       (four-digit wpm) but hundreds of milliseconds in a slow browser, which
+       passed by luck. Pin the clock instead of hoping: pretend the burst took
+       10 seconds and check the arithmetic against that. */
+    T.startTime = Date.now() - 10000;
+    const saneWpm = T.computeWpm();
+    const saneExpected = Math.round(T.correctChars / 5 / (10000 / 60000));
+    check("wpm is a sane number",
+      saneWpm > 0 && saneWpm < 500 && Math.abs(saneWpm - saneExpected) <= 2,
+      saneWpm + " wpm for " + T.correctChars + " correct chars over a pinned 10s");
     check("caret positioned", document.getElementById("caret").style.left !== "", document.getElementById("caret").style.left);
 
     /* ---- make a deliberate mistake, then fix it ---- */
