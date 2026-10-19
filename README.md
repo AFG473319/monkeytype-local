@@ -203,9 +203,9 @@ and the whole point of this project is that double-clicking the HTML file works.
 There is no npm, no test runner and no build step, so the suite is a page:
 open **`tests/smoke.html`** and look at the report it prints at the bottom. The first
 line is a machine-readable summary and the `<title>` mirrors it
-(`SMOKE failed=0 total=114`), so a script can check it without parsing the list.
+(`SMOKE failed=0 total=120`), so a script can check it without parsing the list.
 
-It covers 114 checks across the real seams — the word generator, the typing engine, the
+It covers 120 checks across the real seams — the word generator, the typing engine, the
 chart renderer and the UI — including:
 
 - a deterministic, seeded property test proving that a generated sentence always opens
@@ -222,6 +222,9 @@ chart renderer and the UI — including:
   refusing to scroll sideways even when squeezed
 - the live speed readout staying sane from the very first keystroke instead of dividing
   by a millisecond-wide time window
+- the real `index.html` itself: the suite loads it in an iframe and proves a fresh boot
+  leaves it alone — no debug leftovers on the page, no settings saved behind the user's
+  back, no results or personal bests recorded
 
 To run it headlessly:
 
@@ -233,7 +236,12 @@ chrome --headless=new --allow-file-access-from-files \
 One caveat, stated plainly: `tests/smoke.html` mirrors the markup of `index.html`
 rather than loading it, because `file://` pages cannot read each other. If you change
 the ids in `index.html`, change them there too — the suite fails loudly when an id goes
-missing, but it cannot notice markup that was never mirrored.
+missing, but it cannot notice markup that was never mirrored. To cover that gap, the
+last thing the suite does is load the real `index.html` in an iframe and prove a fresh
+boot leaves it alone: no stray debug scripts typing on the page, no settings saved, no
+results or pbs recorded. Reading into that iframe needs either a local http server
+(Option B above) or `--allow-file-access-from-files` (already in the headless command
+above); with neither available the check fails loudly instead of staying silent.
 
 ---
 

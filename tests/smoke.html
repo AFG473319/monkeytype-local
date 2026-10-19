@@ -102,6 +102,63 @@ window.addEventListener("unhandledrejection", function (e) {
     return ev;
   }
 
+  /* The harness above mirrors index.html's markup, so a stray script tag in the
+     real page would never run here. Load the genuine article in an iframe and
+     prove a fresh boot leaves it alone: no debug leftovers on the page, no
+     settings saved behind the user's back, no results or pbs recorded. */
+  function runIndexBootChecks(done) {
+    let iframe;
+    try {
+      /* the smoke page's own runs wrote to the shared localStorage; give the
+         real page the clean slate a first-time visitor gets */
+      const snapshot = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        snapshot[k] = localStorage.getItem(k);
+      }
+      localStorage.clear();
+      iframe = document.createElement("iframe");
+      iframe.src = "../index.html";
+      iframe.style.cssText = "position:fixed;right:0;bottom:0;width:320px;height:220px;border:1px solid #999;background:#fff;z-index:9999";
+      document.body.appendChild(iframe);
+      /* the debug junk this guard exists for ran on a 1s timer with nested
+         500ms steps, so give the real page three seconds to misbehave */
+      setTimeout(function () {
+        try {
+          const doc = iframe.contentWindow.document;
+          const Real = iframe.contentWindow.MT;
+          check("real index.html loads its scripts", !!Real && !!Real.Config && !!Real.Typing, Real ? "MT present" : "MT missing");
+          if (Real) {
+            check("a fresh boot saves no settings",
+              Real.Config.data.mode === "time" && Real.Config.data.words === 25,
+              Real.Config.data.mode + " / " + Real.Config.data.words + " words");
+            check("a fresh boot records no results", Real.Store.results.length === 0, Real.Store.results.length);
+            check("a fresh boot records no pbs", Object.keys(Real.Store.pbs).length === 0);
+            check("a fresh boot is sitting on a fresh test",
+              Real.Typing.finished === false && Real.Typing.words.length > 0, Real.Typing.words.length);
+          }
+          const leftovers = Array.prototype.filter.call(doc.querySelectorAll("body *"), function (el) {
+            return /\bDIAG\b/.test(el.textContent || "");
+          });
+          check("the real page has no debug leftovers",
+            leftovers.length === 0 && !doc.getElementById("diag"),
+            leftovers.length + " node(s) with DIAG text");
+        } catch (err) {
+          check("real index.html booted clean", false,
+            "could not read the iframe: " + err.message + " — serve over http:// or use --allow-file-access-from-files");
+        }
+        localStorage.clear();
+        for (const k in snapshot) localStorage.setItem(k, snapshot[k]);
+        iframe.remove();
+        done();
+      }, 3000);
+    } catch (err) {
+      check("real index.html booted clean", false, "could not create the iframe: " + err.message);
+      if (iframe) iframe.remove();
+      done();
+    }
+  }
+
   function run() {
   try {
     /* start from a clean slate so repeated runs are comparable */
@@ -477,12 +534,15 @@ window.addEventListener("unhandledrejection", function (e) {
     failed++;
   }
 
-  out.unshift("SMOKE_RESULT failed=" + failed + " total=" + ran);
-  const pre = document.createElement("pre");
-  pre.id = "smoke-report";
-  pre.textContent = out.join("\n");
-  document.body.appendChild(pre);
-  document.title = "SMOKE failed=" + failed + " total=" + ran;
+  /* finish against the real index.html, then print the report */
+  runIndexBootChecks(function () {
+    out.unshift("SMOKE_RESULT failed=" + failed + " total=" + ran);
+    const pre = document.createElement("pre");
+    pre.id = "smoke-report";
+    pre.textContent = out.join("\n");
+    document.body.appendChild(pre);
+    document.title = "SMOKE failed=" + failed + " total=" + ran;
+  });
   }
 
   /* app.js boots on DOMContentLoaded, and it registered its listener first */
