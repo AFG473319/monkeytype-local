@@ -190,6 +190,7 @@ js/data/words.js    english word lists and the code languages
 js/data/quotes.js   the quote pool
 js/data/themes.js   the theme palettes
 tests/smoke.html    the test suite (see below)
+tests/smoke.js     the checks themselves
 ```
 
 Scripts are plain classic scripts loaded in order, deliberately: `type="module"` and
@@ -203,9 +204,14 @@ and the whole point of this project is that double-clicking the HTML file works.
 There is no npm, no test runner and no build step, so the suite is a page:
 open **`tests/smoke.html`** and look at the report it prints at the bottom. The first
 line is a machine-readable summary and the `<title>` mirrors it
-(`SMOKE failed=0 total=120`), so a script can check it without parsing the list.
+(`SMOKE failed=0 total=133`), so a script can check it without parsing the list.
 
-It covers 120 checks across the real seams — the word generator, the typing engine, the
+The suite runs **inside the real `index.html`**: the page fetches it, writes it out as
+the document and appends `tests/smoke.js` to it, so every check runs against the markup
+and scripts the app actually ships. A stray script tag in `index.html` can no longer
+hide from the suite.
+
+It covers 133 checks across the real seams — the word generator, the typing engine, the
 chart renderer and the UI — including:
 
 - a deterministic, seeded property test proving that a generated sentence always opens
@@ -222,6 +228,10 @@ chart renderer and the UI — including:
   refusing to scroll sideways even when squeezed
 - the live speed readout staying sane from the very first keystroke instead of dividing
   by a millisecond-wide time window
+- the words area scrolling by whole rows, the caret staying on the word it belongs to,
+  and a restart putting the text back at the top
+- the words appended in the middle of a long test looking exactly like the ones the
+  test started with
 - the real `index.html` itself: the suite loads it in an iframe and proves a fresh boot
   leaves it alone — no debug leftovers on the page, no settings saved behind the user's
   back, no results or personal bests recorded

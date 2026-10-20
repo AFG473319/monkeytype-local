@@ -496,6 +496,10 @@
       }
 
       if (MT.Sound) MT.Sound.setVolume(c.soundVolume);
+
+      /* The font size, the line width and the theme all change the shape of
+         the rows, so the typing engine has to measure them again. */
+      if (MT.Typing && MT.Typing.refreshLayout) MT.Typing.refreshLayout();
     },
   };
 

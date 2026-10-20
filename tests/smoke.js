@@ -270,8 +270,27 @@
     check("commas appear inside sentences", sawComma === true);
 
     MT.Config.set("words", 25);
-    MT.Config.set("numbers", false);
     MT.Config.set("punctuation", false);
+    MT.Config.set("numbers", false);
+
+    /* ---- the words appended during a long test look like the rest ----
+       A long time test runs out of words and appends more. Those words used
+       to skip the funbox, so an uppercase test turned into a lower case one
+       half way through and everything typed from there on counted as wrong. */
+    MT.Config.set("mode", "time");
+    MT.Config.set("time", 60);
+    MT.Config.set("language", "english");
+    MT.Config.set("funbox", "uppercase");
+    MT.Typing.load(false);
+    check("the test starts with the funbox applied", T.words.slice(0, 20).every(function (w) {
+      return w === w.toUpperCase();
+    }), T.words.slice(0, 4).join(" "));
+    T.appendWords(20);
+    check("the words appended later keep the funbox", T.words.slice(-20).every(function (w) {
+      return w === w.toUpperCase();
+    }), T.words.slice(-4).join(" "));
+    MT.Config.set("funbox", "none");
+    MT.Typing.load(false);
 
     /* ---- keymap, command palette, profile ---- */
     MT.Config.set("showKeymap", "map");
@@ -372,6 +391,68 @@
     check("the finish reason is the timer", T.result.reason === "time", T.result.reason);
     check("the timer bar is empty at the end", document.getElementById("timerBarFill").style.width === "0%", document.getElementById("timerBarFill").style.width);
     check("no stray interval keeps the clock running", T.timerInterval === null);
+
+    /* ---- the words area scrolls by whole rows ----
+       The rows are taller than the line height (every word box adds a border
+       and a little padding), so scrolling by the line height left the row
+       above bleeding into the text and the caret drifting away from the word
+       it belongs to. */
+    MT.Config.set("mode", "time");
+    MT.Config.set("time", 60);
+    MT.Typing.load(false);
+    for (let i = 0; i < 30; i++) {
+      for (const ch of T.words[i]) key(ch);
+      key(" ");
+    }
+    const pitch = T.rowPitch;
+    const wrapEl = document.getElementById("wordsWrapper");
+    const activeEl = T.wordEls[T.activeIndex];
+    /* the caret and the words animate while the area scrolls, so compare the
+       positions they are heading for, not the ones a frame caught mid-flight */
+    const caretStyle = document.getElementById("caret");
+    const scrollCaretLeft = parseFloat(caretStyle.style.left);
+    const scrollCaretTop = parseFloat(caretStyle.style.top);
+    const wrapHeight = wrapEl.getBoundingClientRect().height;
+    check("the row pitch is measured, not guessed", pitch > 0 && Math.abs(T.scrollOffset % pitch) < 0.01,
+      "pitch " + pitch + " offset " + T.scrollOffset);
+    check("the active word stays inside the words area",
+      activeEl.offsetTop + T.scrollOffset >= 0 &&
+      activeEl.offsetTop + T.scrollOffset + pitch <= wrapHeight + 1,
+      "word at " + (activeEl.offsetTop + T.scrollOffset) + " in " + wrapHeight);
+    check("the caret sits on the word it belongs to",
+      scrollCaretLeft >= activeEl.offsetLeft - 1 &&
+      scrollCaretLeft <= activeEl.offsetLeft + activeEl.offsetWidth + 1 &&
+      Math.abs(scrollCaretTop - (activeEl.offsetTop + T.scrollOffset)) < 5,
+      scrollCaretLeft + "," + scrollCaretTop + " vs " + activeEl.offsetLeft + "," + activeEl.offsetTop);
+    check("the words area shows three whole rows", Math.abs(wrapHeight - pitch * 3) < 1,
+      wrapHeight + " vs " + pitch * 3);
+
+    /* ---- a restart puts the words back at the top ---- */
+    /* the area scrolls with a transition, so switch it off for the check:
+       otherwise the words are still on their way and the position is a lie */
+    const wordsEl = document.getElementById("words");
+    wordsEl.style.transition = "none";
+    MT.Typing.nextTest();
+    const firstEl = T.wordEls[0];
+    const firstRect = firstEl.getBoundingClientRect();
+    const wrapTop = wrapEl.getBoundingClientRect().top;
+    const caretAfter = parseFloat(document.getElementById("caret").style.left);
+    wordsEl.style.transition = "";
+    check("a restart scrolls the words back to the top",
+      T.scrollOffset === 0 && Math.abs(firstRect.top - wrapTop) < 1,
+      "offset " + T.scrollOffset + " word " + firstRect.top + " area " + wrapTop);
+    check("the caret follows the first word after a restart",
+      Math.abs(caretAfter - firstEl.offsetLeft) < 3,
+      caretAfter + " vs " + firstEl.offsetLeft);
+    /* ---- the clock comes back when the tab comes back ---- */
+    for (const ch of T.words[0]) key(ch);
+    check("the test is running", T.started === true && T.timerInterval !== null);
+    T.pauseTimer();
+    check("the clock can be paused", T.timerInterval === null);
+    T.resumeTimer();
+    check("the clock runs again after a hidden tab", T.timerInterval !== null);
+    T.stopTimers();
+    check("the clock can be stopped again", T.timerInterval === null);
 
     /* ---- expert difficulty takes backspace away ---- */
     MT.Config.set("difficulty", "expert");

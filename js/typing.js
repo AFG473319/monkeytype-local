@@ -152,7 +152,13 @@
       }
 
       document.addEventListener("visibilitychange", function () {
-        if (document.hidden && self.started && !self.finished) self.pauseTimer();
+        if (document.hidden) {
+          if (self.started && !self.finished) self.pauseTimer();
+        } else {
+          /* the tab came back: the clock has to run again, otherwise the test
+             never ends and the countdown stays frozen */
+          self.resumeTimer();
+        }
       });
     },
 
@@ -222,12 +228,23 @@
         count = 60;
       }
 
-      let words = this.pickWords(pool, count);
+      return this.transformWords(this.pickWords(pool, count), pool);
+    },
+
+    /* The funbox, punctuation and number rules have to be the same for the
+       words that are appended in the middle of a long test as for the ones a
+       test starts with. They used to differ: the appended words skipped the
+       funbox entirely, so an uppercase test suddenly switched to lower case
+       half way through and everything typed from there on was wrong. */
+    transformWords: function (words, pool) {
+      const c = cfg();
+      const lang = MT.getLanguage(c.language);
+      const source = pool && pool.length ? pool : lang.words;
 
       /* funboxes that act on the pool ------------------------------- */
       if (c.funbox === "long_words") {
-        const long = pool.filter(function (w) { return w.length >= 6; });
-        words = this.pickWords(long.length ? long : pool, count, 7);
+        const long = source.filter(function (w) { return w.length >= 6; });
+        words = this.pickWords(long.length ? long : source, words.length);
       } else if (c.funbox === "numbers_only") {
         words = words.map(function () { return String(randInt(1, 9999)); });
       } else if (c.funbox === "reverse") {
@@ -371,6 +388,11 @@
       this.history = [];
       this.bestBurst = 0;
       this.scrollOffset = 0;
+      /* the words area must start at the top again: without this the old
+         transform survived a restart, the text stayed scrolled to the middle
+         of the new list and the caret was drawn where the first word would
+         have been, far away from the words */
+      this.els.words.style.transform = "translateY(0px)";
       this.pendingRestart = false;
       this.result = null;
 
@@ -439,13 +461,10 @@
     },
 
     appendWords: function (extraCount) {
-      const c = cfg();
-      const lang = MT.getLanguage(c.language);
-      let extra = this.pickWords(lang.words, extraCount);
-      if ((c.punctuation || c.numbers || c.difficulty === "master") && !lang.code) {
-        if (c.numbers || c.difficulty === "master") extra = this.applyNumbers(extra);
-        if (c.punctuation || c.difficulty === "master") extra = this.applyPunctuation(extra);
-      }
+      const lang = MT.getLanguage(cfg().language);
+      /* the appended words go through exactly the same rules as the ones the
+         test started with, so a long test never changes shape half way */
+      const extra = this.transformWords(this.pickWords(lang.words, extraCount), lang.words);
 
       const frag = document.createDocumentFragment();
       extra.forEach(function (word) {
@@ -473,11 +492,41 @@
     measureLayout: function () {
       const cs = window.getComputedStyle(this.els.words);
       this.lineHeight = parseFloat(cs.lineHeight) || 24;
-      const offsets = {};
-      this.wordEls.forEach(function (el) {
-        offsets[el.offsetTop] = true;
-      });
-      this.lineCount = Object.keys(offsets).length;
+
+      /* The row pitch is NOT the line height. Every word box sits in a flex
+         line and adds a 2px letter border, 0.05em of padding and its own 2px
+         error border on top of the line box, so the rows are about 5px taller
+         than the line height. Scrolling by the line height therefore
+         under-scrolled by 5px per row, the row above bled into the text area
+         and `offsetTop / lineHeight` drifted away from the real row index
+         after the fourth row. Measure the pitch from the words themselves. */
+      const tops = [];
+      const seen = {};
+      for (let i = 0; i < this.wordEls.length; i++) {
+        const top = this.wordEls[i].offsetTop;
+        if (!seen[top]) {
+          seen[top] = true;
+          tops.push(top);
+        }
+      }
+      tops.sort(function (a, b) { return a - b; });
+      this.lineCount = tops.length;
+      this.rowPitch = tops.length > 1 ? tops[1] - tops[0] : this.lineHeight;
+
+      /* the window shows three whole rows, not three line heights */
+      const c = cfg();
+      if (!(c.showAllLines && c.mode !== "time")) {
+        this.els.wrapper.style.height = (this.rowPitch * 3) + "px";
+      }
+    },
+
+    /* The rows change shape when the font size, the line width or the theme
+       changes: measure them again and put the caret back where it belongs. */
+    refreshLayout: function () {
+      if (!this.els.words || !this.wordEls.length) return;
+      this.measureLayout();
+      this.scrollToActive();
+      this.updateCaret();
     },
 
     applyCaretStyles: function () {
@@ -604,8 +653,10 @@
       if (c.showAllLines && c.mode !== "time") return;
       const wordEl = this.wordEls[this.activeIndex];
       if (!wordEl) return;
-      const line = Math.round(wordEl.offsetTop / this.lineHeight);
-      const targetOffset = -Math.max(0, line - 1) * this.lineHeight;
+      /* scroll by whole rows: the pitch, not the line height */
+      const pitch = this.rowPitch || this.lineHeight;
+      const line = Math.round(wordEl.offsetTop / pitch);
+      const targetOffset = -Math.max(0, line - 1) * pitch;
       if (targetOffset !== this.scrollOffset) {
         this.scrollOffset = targetOffset;
         this.els.words.style.transform = "translateY(" + targetOffset + "px)";
@@ -1011,6 +1062,12 @@
       /* keep it simple: a hidden tab pauses the sampling interval */
       if (this.timerInterval) clearInterval(this.timerInterval);
       this.timerInterval = null;
+    },
+
+    resumeTimer: function () {
+      if (this.timerInterval || this.finished || !this.started) return;
+      const self = this;
+      this.timerInterval = setInterval(function () { self.tick(); }, 1000);
     },
 
     stopTimers: function () {

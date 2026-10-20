@@ -280,6 +280,9 @@ code {
 }
 
 #words.smooth-scroll { transition: transform 0.25s ease; }
+/* the caret has to travel exactly as long as the words it belongs to, or it
+   visibly detaches from the letter while the area scrolls */
+#wordsWrapper:has(#words.smooth-scroll) .caret { transition: left 0.25s ease, top 0.25s ease, height 0.1s ease; }
 
 .word {
   display: flex;
@@ -330,7 +333,7 @@ code {
   height: calc(var(--line-height) * 0.92);
   border-radius: 0.1em;
   background: var(--caret-color);
-  transition: left 0.09s linear, top 0.09s linear, height 0.1s ease;
+  transition: left var(--transition), top var(--transition), height 0.1s ease;
   pointer-events: none;
   z-index: 2;
   animation: caret-blink 1s steps(1) infinite;
