@@ -3,566 +3,77 @@
 <head>
 <meta charset="utf-8">
 <title>monkeytype local &mdash; smoke tests</title>
-<link rel="stylesheet" href="../css/style.css">
-</head>
-<body data-page="test">
-<header id="top">
-  <div class="nav-left"><a class="logo" data-nav="test" href="#test"><span class="logo-text">monkeytype</span></a></div>
-  <nav class="nav-center">
-    <button class="nav-item" data-nav="test">test</button>
-    <button class="nav-item" data-nav="about">about</button>
-    <button class="nav-item" data-nav="profile">profile</button>
-    <button class="nav-item" data-nav="settings">settings</button>
-  </nav>
-  <div class="nav-right">
-    <button class="icon-button" id="themeButton"></button>
-    <button class="icon-button" id="soundButton"></button>
-    <button class="icon-button" id="commandButton"></button>
-  </div>
-</header>
-<main id="main">
-  <section class="page" data-page="test">
-    <div id="typingTest">
-      <div id="configBar">
-        <div class="config-group" id="cg-punctuation"><button class="config-button" data-config="punctuation">@ punctuation</button></div>
-        <div class="config-group" id="cg-numbers"><button class="config-button" data-config="numbers"># numbers</button></div>
-        <div class="config-spacer"></div>
-        <div class="config-group" id="cg-mode">
-          <button class="config-button" data-mode="time">time</button>
-          <button class="config-button" data-mode="words">words</button>
-          <button class="config-button" data-mode="quote">quote</button>
-          <button class="config-button" data-mode="zen">zen</button>
-        </div>
-        <div class="config-group" id="cg-values"></div>
-        <div class="config-spacer"></div>
-        <div class="config-group" id="cg-funbox"></div>
-        <div class="config-group" id="cg-language"></div>
-      </div>
-      <div id="testArea">
-        <div id="liveStats">
-          <div class="live-stat" id="liveWpm"><span class="live-stat-value">0</span></div>
-          <div class="live-stat" id="liveAcc"><span class="live-stat-value">100%</span></div>
-          <div class="live-stat" id="liveBurst"><span class="live-stat-value">0</span></div>
-          <div class="live-stat" id="liveTimer"><span class="live-stat-value">30</span></div>
-        </div>
-        <div id="wordsWrapper"><div id="words"></div><div id="caret" class="caret"></div><div id="paceCaret" class="caret pace-caret"></div></div>
-        <div id="timerBar"><div id="timerBarFill"></div></div>
-        <div id="outOfFocus" hidden><button id="focusButton">focus</button></div>
-        <div id="result" hidden></div>
-      </div>
-      <div id="keymap" hidden></div>
-      <div id="restartHint" hidden></div>
-    </div>
-  </section>
-  <section class="page" data-page="about"><div class="page-content about"><h1>about</h1><p>hi</p></div></section>
-  <section class="page" data-page="settings"><div class="page-content"><div id="settingsContent"></div></div></section>
-  <section class="page" data-page="profile"><div class="page-content"><div id="profileContent"></div></div></section>
-</main>
-<footer id="bottom"><span>&copy; <span id="year"></span> v<span id="version"></span></span><button id="footerResetButton">reset</button></footer>
-<div id="commandPalette" hidden><div class="palette-box"><input id="paletteInput"><div id="paletteList"></div></div></div>
-<div id="themeDropdown" hidden></div>
-<div id="notification" hidden></div>
-<input id="mobileInput" type="text" inputmode="text" enterkeyhint="enter" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" aria-label="typing input" tabindex="-1">
-
 <script>
-/* capture every runtime error before anything else loads */
+/* capture runtime errors before anything else runs */
 window.__errors = [];
+window.__errHooked = false;
 window.addEventListener("error", function (e) {
   window.__errors.push(String(e.message) + " @ " + (e.filename || "") + ":" + (e.lineno || 0));
 });
 window.addEventListener("unhandledrejection", function (e) {
   window.__errors.push("promise: " + String(e.reason));
 });
+window.__errHooked = true;
 </script>
-<script src="../js/data/words.js"></script>
-<script src="../js/data/quotes.js"></script>
-<script src="../js/data/themes.js"></script>
-<script src="../js/keymap.js"></script>
-<script src="../js/config.js"></script>
-<script src="../js/sound.js"></script>
-<script src="../js/chart.js"></script>
-<script src="../js/typing.js"></script>
-<script src="../js/commands.js"></script>
-<script src="../js/ui.js"></script>
-<script src="../js/app.js"></script>
-
+</head>
+<body>
 <script>
-(function () {
-  const out = [];
-  let failed = 0;
-  let ran = 0;
-  function check(name, condition, extra) {
-    ran++;
-    out.push((condition ? "PASS " : "FAIL ") + name + (extra !== undefined ? " [" + extra + "]" : ""));
-    if (!condition) failed++;
-  }
-  function key(k, opts) {
-    const ev = new KeyboardEvent("keydown", Object.assign({ key: k, bubbles: true, cancelable: true }, opts || {}));
-    document.dispatchEvent(ev);
-    return ev;
-  }
+/* The suite used to mirror index.html's markup, which let broken markup hide from it:
+   debug scripts appended to index.html never ran here. So load the real page instead:
+   fetch index.html, add a <base> so js/ and css/ resolve from the repo root, re-arm the
+   error capture, append tests/smoke.js, and write the result out as this document.
+   Reading a local file needs either HTTP (python -m http.server) or
+   --allow-file-access-from-files; both are documented in the README. */
+var CAPTURE =
+  '<script>window.__errors = window.__errors || [];' +
+  'if (!window.__errHooked) {' +
+  'window.__errHooked = true;' +
+  'window.addEventListener("error", function (e) {' +
+  'window.__errors.push(String(e.message) + " @ " + (e.filename || "") + ":" + (e.lineno || 0));' +
+  '});' +
+  'window.addEventListener("unhandledrejection", function (e) {' +
+  'window.__errors.push("promise: " + String(e.reason));' +
+  '});}' +
+  '<\/script>';
 
-  /* The harness above mirrors index.html's markup, so a stray script tag in the
-     real page would never run here. Load the genuine article in an iframe and
-     prove a fresh boot leaves it alone: no debug leftovers on the page, no
-     settings saved behind the user's back, no results or pbs recorded. */
-  function runIndexBootChecks(done) {
-    let iframe;
-    try {
-      /* the smoke page's own runs wrote to the shared localStorage; give the
-         real page the clean slate a first-time visitor gets */
-      const snapshot = {};
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        snapshot[k] = localStorage.getItem(k);
-      }
-      localStorage.clear();
-      iframe = document.createElement("iframe");
-      iframe.src = "../index.html";
-      iframe.style.cssText = "position:fixed;right:0;bottom:0;width:320px;height:220px;border:1px solid #999;background:#fff;z-index:9999";
-      document.body.appendChild(iframe);
-      /* the debug junk this guard exists for ran on a 1s timer with nested
-         500ms steps, so give the real page three seconds to misbehave */
-      setTimeout(function () {
-        try {
-          const doc = iframe.contentWindow.document;
-          const Real = iframe.contentWindow.MT;
-          check("real index.html loads its scripts", !!Real && !!Real.Config && !!Real.Typing, Real ? "MT present" : "MT missing");
-          if (Real) {
-            check("a fresh boot saves no settings",
-              Real.Config.data.mode === "time" && Real.Config.data.words === 25,
-              Real.Config.data.mode + " / " + Real.Config.data.words + " words");
-            check("a fresh boot records no results", Real.Store.results.length === 0, Real.Store.results.length);
-            check("a fresh boot records no pbs", Object.keys(Real.Store.pbs).length === 0);
-            check("a fresh boot is sitting on a fresh test",
-              Real.Typing.finished === false && Real.Typing.words.length > 0, Real.Typing.words.length);
-          }
-          const leftovers = Array.prototype.filter.call(doc.querySelectorAll("body *"), function (el) {
-            return /\bDIAG\b/.test(el.textContent || "");
-          });
-          check("the real page has no debug leftovers",
-            leftovers.length === 0 && !doc.getElementById("diag"),
-            leftovers.length + " node(s) with DIAG text");
-        } catch (err) {
-          check("real index.html booted clean", false,
-            "could not read the iframe: " + err.message + " — serve over http:// or use --allow-file-access-from-files");
-        }
-        localStorage.clear();
-        for (const k in snapshot) localStorage.setItem(k, snapshot[k]);
-        iframe.remove();
-        done();
-      }, 3000);
-    } catch (err) {
-      check("real index.html booted clean", false, "could not create the iframe: " + err.message);
-      if (iframe) iframe.remove();
-      done();
-    }
-  }
+function fail(message) {
+  var pre = document.createElement("pre");
+  pre.id = "smoke-report";
+  pre.textContent =
+    "SMOKE_RESULT failed=1 total=1\n" +
+    "FAIL loaded index.html [" + message + "]\n" +
+    "This page now runs the suite inside the real index.html. Serve the folder\n" +
+    "(python -m http.server 4587) and open http://localhost:4587/tests/smoke.html,\n" +
+    "or run headless with --allow-file-access-from-files as the README shows.";
+  document.body.appendChild(pre);
+  document.title = "SMOKE failed=1 total=1";
+}
 
-  function run() {
-  try {
-    /* start from a clean slate so repeated runs are comparable */
-    MT.Store.clear();
-    MT.Config.load();
-    MT.Config.apply();
-    MT.Typing.nextTest();
-    check("boot: no runtime errors so far", window.__errors.length === 0, window.__errors.join(" | "));
-    check("config loaded", !!MT.Config.data && MT.Config.data.mode === "time");
-    check("words rendered", document.querySelectorAll("#words .word").length > 10, document.querySelectorAll("#words .word").length);
-    check("first word active", document.querySelectorAll("#words .word.active").length === 1);
-    check("settings rendered", document.querySelectorAll(".setting").length > 20, document.querySelectorAll(".setting").length);
-    check("config bar values rendered", document.querySelectorAll("#cg-values .config-button").length === 4, document.querySelectorAll("#cg-values .config-button").length);
-    check("language button rendered", document.querySelectorAll("#cg-language .config-button").length === 1);
-
-    /* ---- type some words correctly ---- */
-    const T = MT.Typing;
-    const words = T.words.slice(0, 8);
-    words.forEach(function (w, idx) {
-      for (const ch of w) key(ch);
-      key(" ");
-      check("word " + idx + " fully correct", T.wordIsFullyCorrect(idx), words[idx] + " vs " + T.input[idx].join(""));
+/* cache: "no-cache" matters: the suite must test the index.html on disk, not the
+   one a previous visit happened to cache */
+fetch("../index.html", { cache: "no-cache" })
+  .then(function (res) {
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    return res.text();
+  })
+  .then(function (html) {
+    /* <base> goes first in <head> so the stylesheet link resolves too */
+    html = html.replace(/<head[^>]*>/i, function (m) {
+      return m + '<base href="../">' + CAPTURE;
     });
-    check("activeIndex advanced", T.activeIndex === 8, T.activeIndex);
-    check("started", T.started === true);
-    check("keypresses counted", T.keypressTotal > 0, T.keypressTotal);
-    check("all correct so far", T.keypressIncorrect === 0, T.keypressIncorrect);
-    check("accuracy 100", Math.round(T.computeAccuracy()) === 100, T.computeAccuracy());
-    /* computeWpm divides by the real elapsed window. These keystrokes were all
-       dispatched in one synchronous burst, so "elapsed" was however long this
-       machine took to run the loop: milliseconds in a fast headless renderer
-       (four-digit wpm) but hundreds of milliseconds in a slow browser, which
-       passed by luck. Pin the clock instead of hoping: pretend the burst took
-       10 seconds and check the arithmetic against that. */
-    T.startTime = Date.now() - 10000;
-    const saneWpm = T.computeWpm();
-    const saneExpected = Math.round(T.correctChars / 5 / (10000 / 60000));
-    check("wpm is a sane number",
-      saneWpm > 0 && saneWpm < 500 && Math.abs(saneWpm - saneExpected) <= 2,
-      saneWpm + " wpm for " + T.correctChars + " correct chars over a pinned 10s");
-    check("caret positioned", document.getElementById("caret").style.left !== "", document.getElementById("caret").style.left);
-
-    /* ---- make a deliberate mistake, then fix it ---- */
-    const target = T.words[8];
-    const wrong = target[0] === "z" ? "q" : "z";
-    key(wrong);
-    check("wrong char marked incorrect", document.querySelectorAll("#words .word.active .letter.incorrect").length === 1);
-    check("word flagged as error", document.querySelectorAll("#words .word.active.error").length === 1);
-    check("keypressIncorrect counted", T.keypressIncorrect === 1, T.keypressIncorrect);
-    check("accuracy dropped", Math.round(T.computeAccuracy()) < 100, T.computeAccuracy());
-
-    key("Backspace");
-    check("backspace removed the char", T.input[8].length === 0, JSON.stringify(T.input[8]));
-    check("error class cleared", document.querySelectorAll("#words .word.active.error").length === 0);
-
-    /* extra letters */
-    for (const ch of target) key(ch);
-    key("z"); key("z");
-    check("extra letters rendered", document.querySelectorAll("#words .word.active .letter.extra").length === 2, document.querySelectorAll("#words .word.active .letter.extra").length);
-    check("extra counted", T.input[8].length === target.length + 2, T.input[8].length);
-    const extraSpans = document.querySelectorAll("#words .word.active .letter.extra");
-    const caretLeft = parseFloat(document.getElementById("caret").style.left);
-    const lastExtraRight = extraSpans[extraSpans.length - 1].offsetLeft + extraSpans[extraSpans.length - 1].offsetWidth;
-    check("caret follows the extra letters", Math.abs(caretLeft - lastExtraRight) < 2, caretLeft + " vs " + lastExtraRight);
-    key("Backspace"); key("Backspace");
-    check("extras removed by backspace", T.input[8].length === target.length, T.input[8].length);
-
-    /* backspace back into the previous word */
-    while (T.input[8] && T.input[8].length) key("Backspace");
-    check("word 8 emptied", T.input[8].length === 0, T.input[8].length);
-    const beforeIndex = T.activeIndex;
-    key("Backspace");
-    check("backspace crosses back a word", T.activeIndex === beforeIndex - 1, T.activeIndex + " from " + beforeIndex);
-
-    /* ---- chart renderer with real data ---- */
-    const chartHost = document.createElement("div");
-    chartHost.style.width = "600px";
-    document.body.appendChild(chartHost);
-    MT.Chart.render(chartHost, {
-      xLabels: ["1", "2", "3", "4"],
-      lines: [
-        { name: "wpm", color: "var(--main-color)", values: [40, 55, 60, 58], fill: true },
-        { name: "raw", color: "var(--sub-color)", values: [50, 70, 75, 72] },
-      ],
-      bars: { name: "errors", color: "var(--error-color)", values: [0, 2, 1, 3] },
-      height: 200,
+    html = html.replace(/<\/body>/i, function (m) {
+      /* bust http caching of the harness itself so an edited smoke.js is always the
+         one that runs; file:// keeps the plain path for --allow-file-access-from-files */
+      var src = location.protocol === "file:" ? "tests/smoke.js" : "tests/smoke.js?b=" + Date.now();
+      return '<script src="' + src + '"><\/script>' + m;
     });
-    check("chart draws both lines", chartHost.querySelectorAll("svg polyline").length === 2, chartHost.querySelectorAll("svg polyline").length);
-    check("chart draws error bars", chartHost.querySelectorAll("svg rect").length >= 3, chartHost.querySelectorAll("svg rect").length);
-    check("chart draws a legend", chartHost.querySelectorAll(".chart-legend span").length === 3);
-    chartHost.remove();
-
-    /* ---- finish a short words test ---- */
-    MT.Config.set("mode", "words");
-    MT.Config.set("words", 10);
-    MT.Typing.load(false);
-    check("words test of 10", T.words.length === 10, T.words.length);
-    check("result hidden while testing", document.getElementById("result").hidden === true);
-
-    T.words.forEach(function (w) {
-      for (const ch of w) key(ch);
-      key(" ");
-    });
-    check("test finished", T.finished === true);
-    check("result screen shown", document.getElementById("result").hidden === false);
-    check("config bar hidden on the result screen", document.getElementById("configBar").style.display === "none");
-    check("short test skips the chart politely", (T.result.history.length < 2 && document.querySelector("#resultChart svg") === null) || T.result.history.length >= 2, T.result.history.length);
-    check("result shows wpm", /\d/.test(document.querySelector("#result .result-big .stat-value").textContent), document.querySelector("#result .result-big .stat-value").textContent);
-    check("result stored", MT.Store.results.length === 1, MT.Store.results.length);
-    check("pb recorded", Object.keys(MT.Store.pbs).length === 1);
-    check("pb flagged on result", T.result.isPb === true);
-
-    /* ---- typing after the result starts a new test ---- */
-    key("Enter");
-    check("enter starts the next test", T.finished === false && T.words.length === 10);
-    check("result hidden again", document.getElementById("result").hidden === true);
-    check("config bar back for the next test", document.getElementById("configBar").style.display === "");
-
-    /* ---- range settings carry their unit ---- */
-    const speedRow = Array.prototype.slice.call(document.querySelectorAll(".setting")).filter(function (row) {
-      return row.querySelector(".setting-name") && row.querySelector(".setting-name").textContent === "Pace caret custom speed";
-    })[0];
-    check("range row found", !!speedRow);
-    if (speedRow) {
-      check("range shows its unit", speedRow.querySelector(".range-value").textContent === "100 wpm", speedRow.querySelector(".range-value").textContent);
-    }
-
-    /* ---- theme + language + mode switching ---- */
-    MT.Config.set("theme", "dracula");
-    MT.Config.apply();
-    check("theme vars applied", document.documentElement.style.getPropertyValue("--main-color").length > 0, document.documentElement.style.getPropertyValue("--main-color"));
-    check("custom theme exists", !!MT.Config.data.customTheme.bg);
-
-    /* ---- the theme dropdown never scrolls sideways ---- */
-    document.getElementById("themeButton").click();
-    const dd = document.getElementById("themeDropdown");
-    check("the theme button opens the theme dropdown", dd.hidden === false);
-    const ddItems = dd.querySelectorAll(".dropdown-item");
-    check("theme dropdown is populated", ddItems.length > 40, ddItems.length);
-
-    const firstRowTop = Math.min.apply(null, Array.prototype.map.call(ddItems, function (el) { return el.offsetTop; }));
-    const inFirstRow = Array.prototype.filter.call(ddItems, function (el) { return el.offsetTop === firstRowTop; }).length;
-    check("themes are laid out in two columns", inFirstRow === 2, inFirstRow + " in the first row");
-
-    /* Squeeze it hard. A bare 1fr track has a min-content floor, so a long name
-       like "frozen_llama" used to widen the grid past the box and force a
-       horizontal scrollbar. This is the condition that produced one. */
-    const ddWidth = dd.style.width;
-    dd.style.width = "12rem";
-    const sideways = dd.scrollWidth - dd.clientWidth;
-    check("theme dropdown has no horizontal overflow, even when squeezed", sideways <= 1, sideways + "px");
-    dd.style.width = ddWidth;
-    MT.UI.closeDropdown();
-    check("the theme dropdown closes again", dd.hidden === true);
-
-    MT.Config.set("language", "python");
-    MT.Typing.load(false);
-    check("python words generated", T.words.length > 0 && T.words.every(function (w) {
-      return MT.languages.python.words.indexOf(w) !== -1;
-    }), T.words.slice(0, 6).join(" "));
-    check("python list is not the english list", MT.languages.python.words.indexOf("the") === -1 && MT.languages.english.words.indexOf("def") === -1);
-
-    /* ---- the word lists keep the promises their labels make ---- */
-    const langs = MT.languageOrder;
-    check("every language in the order exists", langs.length > 0 && langs.every(function (n) { return !!MT.languages[n]; }), langs.join(", "));
-    check("every language has words and a label", langs.every(function (n) {
-      const l = MT.languages[n];
-      return l.words.length > 0 && typeof l.label === "string" && l.label.length > 0;
-    }));
-    check("no language list repeats a word", langs.every(function (n) {
-      const w = MT.languages[n].words;
-      return w.length === new Set(w).size;
-    }), langs.filter(function (n) { const w = MT.languages[n].words; return w.length !== new Set(w).size; }).join(", "));
-
-    const en = MT.languages.english.words;
-    check("english words are plain lowercase", en.every(function (w) { return /^[a-z]+$/.test(w); }),
-      en.filter(function (w) { return !/^[a-z]+$/.test(w); }).slice(0, 5).join(" "));
-    check("english is big enough to fill a long test", en.length >= 1000, en.length);
-    check("english 200 is the top of the english list", JSON.stringify(MT.languages.english_200.words) === JSON.stringify(en.slice(0, 200)));
-
-    const sizeClaims = langs
-      .map(function (n) { return { n: n, m: /(\d+)\s*$/.exec(MT.languages[n].label) }; })
-      .filter(function (x) { return x.m; });
-    check("a number in a language label matches its real size", sizeClaims.every(function (x) {
-      return Number(x.m[1]) === MT.languages[x.n].words.length;
-    }), sizeClaims.map(function (x) { return x.n + " says " + x.m[1] + " has " + MT.languages[x.n].words.length; }).join("; "));
-
-    MT.Config.set("mode", "quote");
-    MT.Typing.load(false);
-    check("quote words generated", T.words.length > 3, T.words.slice(0, 6).join(" "));
-    check("quote source recorded", !!T.quote && !!T.quote.source, T.quote && T.quote.source);
-
-    MT.Config.set("mode", "zen");
-    MT.Typing.load(false);
-    ["h", "e", "l", "l", "o", " "].forEach(function (ch) { key(ch); });
-    check("zen accepts anything", T.words[0] === "hello", T.words[0]);
-    key("Enter");
-    check("zen finishes on enter", T.finished === true);
-
-    /* ---- punctuation and numbers, checked as a deterministic property ---- */
-    function withSeed(seed, fn) {
-      const real = Math.random;
-      let s = seed >>> 0;
-      Math.random = function () { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
-      try { return fn(); } finally { Math.random = real; }
-    }
-
-    MT.Config.set("mode", "words");
-    MT.Config.set("words", 10);
-    MT.Config.set("language", "english");
-    MT.Config.set("punctuation", true);
-    MT.Config.set("numbers", true);
-
-    let sentenceStartViolations = 0;
-    let missingSentenceEnd = 0;
-    let emptyWords = 0;
-    let sawCapital = false;
-    let sawComma = false;
-    let sentenceStarts = 0;
-
-    withSeed(20261018, function () {
-      for (let run = 0; run < 40; run++) {
-        const words = MT.Typing.generate();
-        words.forEach(function (w, i) {
-          if (!w || !w.length) emptyWords++;
-          if (/,/.test(w)) sawComma = true;
-          const opensSentence = i === 0 || /[.!?;]$/.test(words[i - 1]);
-          if (opensSentence) {
-            sentenceStarts++;
-            const ok = /^[A-Z]/.test(w);
-            if (!ok) sentenceStartViolations++;
-            if (ok) sawCapital = true;
-          }
-        });
-        if (!words.some(function (w) { return /[.!?;]$/.test(w); })) missingSentenceEnd++;
-      }
-    });
-
-    check("generator produced sentences to inspect", sentenceStarts >= 40, sentenceStarts);
-    check("no generated word is empty", emptyWords === 0, emptyWords);
-    check("a sentence always opens with a capital letter, never a digit", sentenceStartViolations === 0, sentenceStartViolations + " of " + sentenceStarts + " sentence starts were wrong");
-    check("every generated list has sentence punctuation", missingSentenceEnd === 0, missingSentenceEnd + " of 40 lists lacked it");
-    check("sentences are capitalised", sawCapital === true);
-    check("commas appear inside sentences", sawComma === true);
-
-    MT.Config.set("words", 25);
-    MT.Config.set("punctuation", false);
-    MT.Config.set("numbers", false);
-
-    /* ---- keymap, command palette, profile ---- */
-    MT.Config.set("showKeymap", "map");
-    MT.Config.apply();
-    check("keymap rendered", document.querySelectorAll("#keymap .keymap-key").length > 25, document.querySelectorAll("#keymap .keymap-key").length);
-    MT.Typing.load(false);
-    const k0 = T.words[0];
-    key(k0[0]);
-    check("keymap highlights keys", document.querySelectorAll("#keymap .keymap-key.pressed-wrong, #keymap .keymap-key.active").length > 0);
-    check("keymap head recorded", Object.keys(MT.Keymap.heat).length > 0);
-    MT.Config.set("showKeymap", "off");
-    MT.Config.apply();
-
-    MT.Commands.openPalette();
-    check("palette opens", MT.Commands.isOpen() === true && document.getElementById("commandPalette").hidden === false);
-    MT.Commands.input.value = "dracula";
-    MT.Commands.filter("dracula");
-    check("palette finds the theme", MT.Commands.filtered.length > 0, MT.Commands.filtered.length);
-    check("palette result is the theme command", MT.Commands.filtered[0] && MT.Commands.filtered[0].item.name === "theme dracula", MT.Commands.filtered[0] && MT.Commands.filtered[0].item.name);
-    MT.Commands.filter("");
-    check("palette lists everything", MT.Commands.filtered.length > 40, MT.Commands.filtered.length);
-    MT.Commands.close();
-
-    MT.UI.showPage("profile");
-    check("profile page active", document.querySelector('.page[data-page="profile"]').classList.contains("active"));
-    check("profile cards rendered", document.querySelectorAll(".profile-card").length === 5, document.querySelectorAll(".profile-card").length);
-    check("profile chart rendered", document.querySelectorAll("#profileContent svg").length === 1 || MT.Store.results.length < 2, document.querySelectorAll("#profileContent svg").length);
-    check("results table rendered", document.querySelectorAll(".result-table tbody tr").length > 0);
-
-    MT.UI.showPage("settings");
-    check("settings page active", document.querySelector('.page[data-page="settings"]').classList.contains("active"));
-    MT.UI.showPage("test");
-
-    /* ---- direct config mutation from the settings UI ---- */
-    const focusToggle = Array.prototype.slice.call(document.querySelectorAll(".setting")).filter(function (row) {
-      return row.querySelector(".setting-name") && row.querySelector(".setting-name").textContent === "Focus mode";
-    })[0];
-    check("found the focus mode row", !!focusToggle);
-    if (focusToggle) {
-      focusToggle.querySelector(".toggle").click();
-      check("toggle flipped the setting", MT.Config.data.focusMode === true, MT.Config.data.focusMode);
-      focusToggle.querySelector(".toggle").click();
-      check("toggle flipped back", MT.Config.data.focusMode === false);
-    }
-
-    /* ---- hour-based consistency / durations do not blow up ---- */
-    MT.Config.set("mode", "time");
-    MT.Config.set("time", 15);
-    MT.Typing.load(false);
-    check("time mode word pool is generous", T.words.length >= 60, T.words.length);
-    check("timer starts at the configured value", document.querySelector("#liveTimer .live-stat-value").textContent === "15", document.querySelector("#liveTimer .live-stat-value").textContent);
-
-    /* ---- a simulated multi-second test: sampling, history and the chart ---- */
-    MT.Config.set("alwaysShowWordsHistory", true);
-    MT.Typing.load(false);
-    T.started = true;
-    T.startTime = Date.now() - 4000;
-    for (let i = 0; i < 4; i++) {
-      T.charsThisSecond = 25;
-      T.correctChars += 25;
-      T.allCharsTyped += 25;
-      T.errorsThisSecond = i === 1 ? 2 : 0;
-      T.keypressTotal += 25;
-      T.keypressCorrect += 23;
-      T.keypressIncorrect += 2;
-      T.tick();
-    }
-    check("history sampled each second", T.history.length === 4, T.history.length);
-    check("consistency computed", T.computeConsistency() > 0 && T.computeConsistency() <= 100, T.computeConsistency());
-    T.finish("time");
-    check("timed result charted", document.querySelectorAll("#resultChart svg polyline").length === 2, document.querySelectorAll("#resultChart svg polyline").length);
-    check("timed result duration measured", T.result.duration >= 3.5 && T.result.duration <= 5, T.result.duration);
-    check("words history shown when enabled", document.querySelectorAll("#resultWords .w").length > 0, document.querySelectorAll("#resultWords .w").length);
-    check("stats tabulated", T.result.wpm > 0 && T.result.raw >= T.result.wpm, T.result.wpm + "/" + T.result.raw);
-    MT.Config.set("alwaysShowWordsHistory", false);
-
-    /* ---- personal bests only improve ---- */
-    const pbCount = Object.keys(MT.Store.pbs).length;
-    const fake = Object.assign({}, T.result, { wpm: 1, timestamp: Date.now() });
-    MT.Store.checkPb(fake);
-    check("a worse result does not overwrite a pb", Object.keys(MT.Store.pbs).length === pbCount, Object.keys(MT.Store.pbs).length);
-    const fake2 = Object.assign({}, T.result, { wpm: 999, timestamp: Date.now() });
-    MT.Store.checkPb(fake2);
-    check("a better result becomes the pb", MT.Store.pbs[MT.Store.pbKey(fake2)].wpm === 999, MT.Store.pbs[MT.Store.pbKey(fake2)].wpm);
-    MT.Store.results = MT.Store.results.filter(function (r) { return r.timestamp !== fake2.timestamp; });
-
-    /* ---- the clock ends a timed test by itself ---- */
-    MT.Config.set("mode", "time");
-    MT.Config.set("time", 15);
-    MT.Config.set("punctuation", false);
-    MT.Config.set("numbers", false);
-    MT.Typing.load(false);
-    T.started = true;
-    T.startTime = Date.now() - 20000;
-    let ticks = 0;
-    while (!T.finished && ticks < 40) { T.tick(); ticks++; }
-    check("a timed test stops when the clock runs out", T.finished === true, "after " + ticks + " ticks");
-    check("the finish reason is the timer", T.result.reason === "time", T.result.reason);
-    check("the timer bar is empty at the end", document.getElementById("timerBarFill").style.width === "0%", document.getElementById("timerBarFill").style.width);
-    check("no stray interval keeps the clock running", T.timerInterval === null);
-
-    /* ---- expert difficulty takes backspace away ---- */
-    MT.Config.set("difficulty", "expert");
-    MT.Config.set("mode", "words");
-    MT.Config.set("words", 10);
-    MT.Typing.load(false);
-    const firstWord = T.words[0];
-    for (const ch of firstWord) key(ch);
-    check("letters still land in expert mode", T.input[0].length === firstWord.length, T.input[0].length);
-    key("Backspace");
-    check("expert mode refuses backspace", T.input[0].length === firstWord.length, T.input[0].length);
-    MT.Config.set("difficulty", "normal");
-    MT.Typing.load(false);
-    for (const ch of T.words[0]) key(ch);
-    key("Backspace");
-    check("normal difficulty keeps backspace", T.input[0].length === T.words[0].length - 1, T.input[0].length);
-
-    /* ---- the live speed readout is sane from the first keystroke ---- */
-    MT.Config.set("liveStatsStyle", "speed");
-    MT.Typing.load(false);
-    const probe = T.words[0].slice(0, 5);
-    probe.split("").forEach(function (ch) { key(ch); });
-    const liveNode = document.querySelector("#liveWpm .live-stat-value");
-    const live = Number(liveNode.textContent);
-    check("live speed appears once typing starts", document.getElementById("liveStats").style.visibility === "visible");
-    check("live speed is a sane number, not an artefact of a 1ms window",
-      isFinite(live) && live > 0 && live <= 200, live + " wpm after " + probe.length + " chars");
-    check("live speed is hidden when the test is idle", (function () {
-      MT.Typing.load(false);
-      return document.getElementById("liveStats").style.visibility === "hidden";
-    })());
-
-    check("no runtime errors overall", window.__errors.length === 0, window.__errors.join(" | "));
-  } catch (err) {
-    out.push("THREW " + err.message + " @ " + (err.stack || "").split("\n")[1]);
-    failed++;
-  }
-
-  /* finish against the real index.html, then print the report */
-  runIndexBootChecks(function () {
-    out.unshift("SMOKE_RESULT failed=" + failed + " total=" + ran);
-    const pre = document.createElement("pre");
-    pre.id = "smoke-report";
-    pre.textContent = out.join("\n");
-    document.body.appendChild(pre);
-    document.title = "SMOKE failed=" + failed + " total=" + ran;
+    document.open();
+    document.write(html);
+    document.close();
+  })
+  .catch(function (err) {
+    fail(String(err && err.message || err));
   });
-  }
-
-  /* app.js boots on DOMContentLoaded, and it registered its listener first */
-  if (document.readyState === "loading") {
-    window.addEventListener("DOMContentLoaded", run);
-  } else {
-    run();
-  }
-})();
 </script>
 </body>
 </html>
